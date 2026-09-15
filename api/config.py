@@ -11548,6 +11548,7 @@ _SETTINGS_DEFAULTS = {
     "tts_auto_read": False,
     "tts_engine": "browser",
     "tts_voice": "",
+    "tts_voice_by_profile": {},  # profile name -> voice id; unlisted profiles use tts_voice
     "tts_rate": 1.0,
     "tts_pitch": 1.0,
     "voice_mode_button": False,
@@ -11624,6 +11625,7 @@ _SETTINGS_SPEECH_KEYS = {
     "tts_auto_read",
     "tts_engine",
     "tts_voice",
+    "tts_voice_by_profile",
     "tts_rate",
     "tts_pitch",
     "voice_mode_button",
@@ -12119,6 +12121,19 @@ def save_settings(settings: dict) -> dict:
                     continue
             if k == "tts_voice":
                 if not isinstance(v, str) or len(v) > 200 or "\x00" in v:
+                    continue
+            if k == "tts_voice_by_profile":
+                if not isinstance(v, dict) or len(v) > 64:
+                    continue
+                if not all(
+                    isinstance(pk, str)
+                    and isinstance(pv, str)
+                    and len(pk) <= 128
+                    and len(pv) <= 200
+                    and "\x00" not in pk
+                    and "\x00" not in pv
+                    for pk, pv in v.items()
+                ):
                     continue
             # Validate language codes (BCP-47-like: 'en', 'zh', 'fr', 'zh-CN')
             if k == "language" and (

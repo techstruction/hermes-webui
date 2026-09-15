@@ -9410,7 +9410,7 @@ let _playingEdgeAudio=null;
 
 function _buildBrowserUtterance(text, btn){
   const utter=new SpeechSynthesisUtterance(text);
-  const savedVoice=localStorage.getItem('hermes-tts-voice');
+  const savedVoice=_ttsVoiceFor('');
   const voices=speechSynthesis.getVoices();
   if(savedVoice&&voices.length){
     const match=voices.find(v=>v.name===savedVoice);
@@ -9479,6 +9479,22 @@ function _ttsUnlockAudio(){
 window._ttsAudioEl=_ttsAudioEl;
 window._ttsAudioUnlocked=function(){return _ttsAudioIsUnlocked;};
 
+// One voice per Hermes profile — Mia should not inherit Adam's voice. The map
+// is profile name -> voice id; any profile not listed falls back to the single
+// global tts_voice, so existing setups behave exactly as before.
+function _ttsVoiceFor(fallback){
+  var global=localStorage.getItem('hermes-tts-voice')||fallback||'';
+  try{
+    var raw=localStorage.getItem('hermes-tts-voice-by-profile');
+    if(!raw) return global;
+    var map=JSON.parse(raw);
+    var prof=(typeof S!=='undefined'&&S.activeProfile)?S.activeProfile:'default';
+    var v=map&&map[prof];
+    return (typeof v==='string'&&v)?v:global;
+  }catch(_){ return global; }
+}
+window._ttsVoiceFor=_ttsVoiceFor;
+
 function _playEdgeTtsChunked(text, btn){
   _ttsSpeaking=true;
   if(btn) btn.dataset.speaking='1';
@@ -9490,7 +9506,7 @@ function _playEdgeTtsChunked(text, btn){
       return;
     }
     const chunk=chunks[idx];
-    const voice=localStorage.getItem('hermes-tts-voice')||'zh-CN-XiaoxiaoNeural';
+    const voice=_ttsVoiceFor('zh-CN-XiaoxiaoNeural');
     const savedRate=parseFloat(localStorage.getItem('hermes-tts-rate'));
     const savedPitch=parseFloat(localStorage.getItem('hermes-tts-pitch'));
     let rate='', pitch='';
@@ -9580,7 +9596,7 @@ function speakMessage(btn){
       if(msg&&typeof showToast==='function') showToast(msg,4000,'error');
     };
     const _opts={
-      voice: localStorage.getItem('hermes-tts-voice')||'',
+      voice: _ttsVoiceFor(''),
       rate: parseFloat(localStorage.getItem('hermes-tts-rate')),
       pitch: parseFloat(localStorage.getItem('hermes-tts-pitch')),
     };
@@ -9757,7 +9773,7 @@ function autoReadLastAssistant(){
   if(typeof window._hermesTtsIsRegistered==='function' && window._hermesTtsIsRegistered(engine)){
     _ttsSpeaking=true;
     const _opts={
-      voice: localStorage.getItem('hermes-tts-voice')||'',
+      voice: _ttsVoiceFor(''),
       rate: parseFloat(localStorage.getItem('hermes-tts-rate')),
       pitch: parseFloat(localStorage.getItem('hermes-tts-pitch')),
     };

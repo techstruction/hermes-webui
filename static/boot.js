@@ -1779,7 +1779,7 @@ window.renderTranscript=function(container, messages, opts){
     if(typeof window._hermesTtsIsRegistered==='function' && window._hermesTtsIsRegistered(engine)){
       _ttsSpeaking=true;
       const _opts={
-        voice: localStorage.getItem("hermes-tts-voice")||'',
+        voice: (window._ttsVoiceFor?window._ttsVoiceFor(''):localStorage.getItem("hermes-tts-voice")||''),
         rate: parseFloat(localStorage.getItem("hermes-tts-rate")),
         pitch: parseFloat(localStorage.getItem("hermes-tts-pitch")),
       };
@@ -1895,7 +1895,7 @@ window.renderTranscript=function(container, messages, opts){
       return;
     }
     if(engine==="edge"){
-      const voice=localStorage.getItem("hermes-tts-voice")||"zh-CN-XiaoxiaoNeural";
+      const voice=(window._ttsVoiceFor?window._ttsVoiceFor("zh-CN-XiaoxiaoNeural"):localStorage.getItem("hermes-tts-voice")||"zh-CN-XiaoxiaoNeural");
       const savedRate=parseFloat(localStorage.getItem("hermes-tts-rate"));
       const savedPitch=parseFloat(localStorage.getItem("hermes-tts-pitch"));
       let rate='', pitch='';
@@ -1946,7 +1946,7 @@ window.renderTranscript=function(container, messages, opts){
     const utter=new SpeechSynthesisUtterance(clean);
 
     // Apply saved voice preferences
-    const savedVoice=localStorage.getItem('hermes-tts-voice');
+    const savedVoice=(window._ttsVoiceFor?window._ttsVoiceFor(''):localStorage.getItem("hermes-tts-voice")||'');
     const voices=speechSynthesis.getVoices();
     if(savedVoice&&voices.length){
       const match=voices.find(v=>v.name===savedVoice);
@@ -3287,6 +3287,12 @@ function _mirrorSpeechSettingsFromServer(s){
       try{localStorage.setItem(storageKey,String(resolveScalar(settingKey,storageKey)));}catch(_){}
     }
   });
+  if(hasServerValue('tts_voice_by_profile')){
+    try{
+      const m=s['tts_voice_by_profile'];
+      if(m&&typeof m==='object') localStorage.setItem('hermes-tts-voice-by-profile',JSON.stringify(m));
+    }catch(_){}
+  }
   if(hasServerValue('raw_audio_mode')){
     const rawAudioMode=resolveBool('raw_audio_mode','hermes-raw-audio-mode');
     if(typeof window._applyRawAudioModePreference==='function'){
