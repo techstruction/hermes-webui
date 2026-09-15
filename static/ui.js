@@ -9442,6 +9442,43 @@ function _buildBrowserUtterance(text, btn){
   return utter;
 }
 
+// iOS/Safari rejects play() on an element that was never started inside a user
+// gesture. Every TTS element here is built in a fetch callback, long after the
+// tap, so a fresh `new Audio()` per utterance is permanently blocked. One
+// element primed during a real gesture stays unlocked for the page's life;
+// playback is sequential, so sharing it across chunks and engines is safe.
+var _ttsSharedAudio=null, _ttsAudioIsUnlocked=false;
+var _TTS_SILENT_WAV='data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+function _ttsAudioEl(url){
+  if(!_ttsSharedAudio) _ttsSharedAudio=new Audio();
+  var a=_ttsSharedAudio;
+  a.onended=null; a.onerror=null;
+  try{ a.pause(); }catch(_){}
+  a.src=url;
+  return a;
+}
+function _ttsUnlockAudio(){
+  if(_ttsAudioIsUnlocked) return;
+  if(!_ttsSharedAudio) _ttsSharedAudio=new Audio();
+  var a=_ttsSharedAudio;
+  try{
+    a.src=_TTS_SILENT_WAV;
+    var p=a.play();
+    if(p&&p.then){
+      p.then(function(){try{a.pause();a.currentTime=0;}catch(_){} _ttsAudioIsUnlocked=true;})
+       .catch(function(){});
+    }else{
+      try{a.pause();}catch(_){}
+      _ttsAudioIsUnlocked=true;
+    }
+  }catch(_){}
+}
+['pointerdown','touchend','click','keydown'].forEach(function(ev){
+  document.addEventListener(ev,_ttsUnlockAudio,{capture:true,passive:true});
+});
+window._ttsAudioEl=_ttsAudioEl;
+window._ttsAudioUnlocked=function(){return _ttsAudioIsUnlocked;};
+
 function _playEdgeTtsChunked(text, btn){
   _ttsSpeaking=true;
   if(btn) btn.dataset.speaking='1';
@@ -9475,7 +9512,7 @@ function _playEdgeTtsChunked(text, btn){
     .then(function(blob){
       if(!_ttsSpeaking) return;
       const url=URL.createObjectURL(blob);
-      const audio=new Audio(url);
+      const audio=_ttsAudioEl(url);
       _playingEdgeAudio=audio;
       audio.onended=function(){
         URL.revokeObjectURL(url);

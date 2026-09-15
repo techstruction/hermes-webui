@@ -1787,7 +1787,7 @@ window.renderTranscript=function(container, messages, opts){
         .then(function(buf){
           const blob=new Blob([buf]);
           const url=URL.createObjectURL(blob);
-          const audio=new Audio(url);
+          const audio=(window._ttsAudioEl?window._ttsAudioEl(url):new Audio(url));
           _playingEdgeAudio=audio;
           audio.onended=function(){
             _ttsSpeaking=false;
@@ -1827,7 +1827,7 @@ window.renderTranscript=function(container, messages, opts){
       })
       .then(blob => {
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
+        const audio = (window._ttsAudioEl?window._ttsAudioEl(url):new Audio(url));
         _playingEdgeAudio=audio;
         audio.onended = () => {
           _ttsSpeaking=false;
@@ -1867,7 +1867,7 @@ window.renderTranscript=function(container, messages, opts){
       })
       .then(blob => {
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
+        const audio = (window._ttsAudioEl?window._ttsAudioEl(url):new Audio(url));
         _playingEdgeAudio=audio;
         audio.onended = () => {
           _ttsSpeaking=false;
@@ -1913,7 +1913,7 @@ window.renderTranscript=function(container, messages, opts){
       })
       .then(blob => {
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
+        const audio = (window._ttsAudioEl?window._ttsAudioEl(url):new Audio(url));
         // Register with the shared handle (declared in ui.js, same global scope;
         // both scripts are fully evaluated before any voice interaction) so
         // stopTTS() — called from _deactivate() — can actually pause hands-free
