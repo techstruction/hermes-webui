@@ -9592,7 +9592,6 @@ function requestNotificationPermission(){
     return p;
   });
 }
-<<<<<<< HEAD
 const _promptNotifySeen = new Map();
 // Prompt-card notifications: an approval or clarify card BLOCKS the run until
 // it is answered, so every surfacing path must notify — the live SSE event,
@@ -9667,7 +9666,8 @@ function _notifyPromptCard(kind, sid, pending){
       if (accepted !== true) rollback();
     }, rollback);
   } catch (_) { rollback(); }
-=======
+}
+
 
 // Web Push registration: local Notification()/showNotification() (above)
 // only fire while this page or its service worker is actively alive, which
@@ -9725,7 +9725,6 @@ async function _unsubscribeFromPush(){
     await sub.unsubscribe();
     await api('api/push/unsubscribe',{method:'POST',body:JSON.stringify({endpoint}),timeoutToast:false});
   }catch(e){console.warn('Push unsubscribe failed:',e);}
->>>>>>> 98bd9c5d (feat(push): Web Push (VAPID) to wake a backgrounded PWA)
 }
 function sendBrowserNotification(title,body,options={}){
   const force=!!(options&&options.force);
